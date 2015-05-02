@@ -1,5 +1,8 @@
 # JSON bind for gocraft/web package#
 
+- decode json body to your object  
+- encode your object to json and send it as a response
+
 ## Installation
 
     $ go get github.com/corneldamian/json-binding
@@ -11,14 +14,15 @@ package main
 
 import (
 	"net/http"
-	"fmt"
 
 	"github.com/corneldamian/json-binding"
 	"github.com/gocraft/web"
 )
 
 type Context struct {
-	BodyJSON interface{}
+	RequestJSON interface{}
+	ResponseJSON interface{}
+	ResponseStatus int
 }
 
 type Authenticate struct {
@@ -27,13 +31,15 @@ type Authenticate struct {
 }
 
 func Login(ctx *Context, rw web.ResponseWriter, req *web.Request) {
-	a := ctx.BodyJSON.(*Authenticate)
-	fmt.Fprintf(rw, "User %s, Pass: %s", a.Username, a.Password)
+	a := ctx.RequestJSON.(*Authenticate)
+	ctx.ResponseJSON = binding.SuccessResponse("User " + a.Username + " Pass: " +  a.Password)
+	ctx.ResponseStatus = http.StatusUnauthorized
 }
 
 func main() {
 	web := web.New(Context{}).
-		Middleware(binding.Bind(Authenticate{}, nil)).
+		Middleware(binding.Response(nil)).		
+		Middleware(binding.Request(Authenticate{}, nil)).
 		Post("/auth/login", Login)
 
 	http.ListenAndServe("localhost:8080", web)

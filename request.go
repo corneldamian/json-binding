@@ -3,6 +3,7 @@ package binding
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"reflect"
 
@@ -15,7 +16,7 @@ func decodeBodyToJSON(ctx interface{}, fieldType reflect.Type, r *web.Request) e
 		panic("expected pointer to struct")
 	}
 	t = t.Elem()
-	saveToField := t.FieldByName("BodyJSON")
+	saveToField := t.FieldByName("RequestJSON")
 	if !saveToField.IsValid() {
 		panic("Expected to find BodyJSON field name on the context")
 	}
@@ -27,6 +28,9 @@ func decodeBodyToJSON(ctx interface{}, fieldType reflect.Type, r *web.Request) e
 	newObject := reflect.New(fieldType)
 	err := json.NewDecoder(r.Body).Decode(newObject.Elem().Addr().Interface())
 	if err != nil {
+		if err == io.EOF {
+			return fmt.Errorf("Request body is empty")
+		}
 		return err
 	}
 
@@ -35,7 +39,7 @@ func decodeBodyToJSON(ctx interface{}, fieldType reflect.Type, r *web.Request) e
 	return nil
 }
 
-func Bind(field interface{}, errorHandlerCustom func(web.ResponseWriter, error)) func(
+func Request(field interface{}, errorHandlerCustom func(web.ResponseWriter, error)) func(
 	interface{}, web.ResponseWriter, *web.Request, web.NextMiddlewareFunc) {
 
 	errorHandler := ErrorHandler
@@ -57,5 +61,5 @@ func Bind(field interface{}, errorHandlerCustom func(web.ResponseWriter, error))
 
 func ErrorHandler(rw web.ResponseWriter, err error) {
 	rw.WriteHeader(http.StatusBadRequest)
-	fmt.Fprintf(rw, "{\"error\": \"%s\"", err)
+	fmt.Fprintf(rw, "{\"Error\": \"%s\"", err)
 }
