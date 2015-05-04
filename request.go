@@ -10,26 +10,28 @@ import (
 	"github.com/gocraft/web"
 )
 
+var ErrRequestBodyIncomplete = fmt.Errorf("Request body is empty")
 func decodeBodyToJSON(ctx interface{}, fieldType reflect.Type, r *web.Request) error {
 	t := reflect.ValueOf(ctx)
 	if t.Type().Kind() != reflect.Ptr {
 		panic("expected pointer to struct")
 	}
 	t = t.Elem()
-	saveToField := t.FieldByName("RequestJSON")
+	const contextFieldNameForRequest = "RequestJSON"
+	saveToField := t.FieldByName(contextFieldNameForRequest)
 	if !saveToField.IsValid() {
-		panic("Expected to find BodyJSON field name on the context")
+		panic(fmt.Sprintf("Expected to find field named %q name on the context",contextFieldNameForRequest))
 	}
 
 	if !saveToField.CanSet() {
-		panic("Unable to set BodyJSON field value on the context")
+		panic(fmt.Sprintf("Unable to set the value of field named %q on the context",contextFieldNameForRequest))
 	}
 
 	newObject := reflect.New(fieldType)
 	err := json.NewDecoder(r.Body).Decode(newObject.Elem().Addr().Interface())
 	if err != nil {
 		if err == io.EOF {
-			return fmt.Errorf("Request body is empty")
+			return ErrRequestBodyIncomplete
 		}
 		return err
 	}
