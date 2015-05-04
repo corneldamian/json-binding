@@ -85,8 +85,8 @@ func Response(errorHandlerCustom func(web.ResponseWriter, error)) func(
 		if len(data) > 0 {
 			_, err = rw.Write(data)
 			if err != nil {
-				rw.Write([]byte("{\"Error\": \"writing error\"")) //try to send error ???
-				panic("I was unable to write data to the client: " + err.Error())
+				errorHandler(rw, err)
+				return
 			}
 		}
 	}

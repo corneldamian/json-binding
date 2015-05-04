@@ -62,6 +62,9 @@ func Request(field interface{}, errorHandlerCustom func(web.ResponseWriter, erro
 }
 
 func ErrorHandler(rw web.ResponseWriter, err error) {
+	if rw.Written() {
+		panic(fmt.Sprintf("Data already started to be sent to the client and i had an error: %s", err))
+	}
 	rw.WriteHeader(http.StatusBadRequest)
 	fmt.Fprintf(rw, "{\"Error\": \"%s\"", err)
 }
