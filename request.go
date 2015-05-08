@@ -11,6 +11,7 @@ import (
 )
 
 var ErrRequestBodyIncomplete = fmt.Errorf("Request body is empty")
+
 func decodeBodyToJSON(ctx interface{}, fieldType reflect.Type, r *web.Request) error {
 	t := reflect.ValueOf(ctx)
 	if t.Type().Kind() != reflect.Ptr {
@@ -20,11 +21,11 @@ func decodeBodyToJSON(ctx interface{}, fieldType reflect.Type, r *web.Request) e
 	const contextFieldNameForRequest = "RequestJSON"
 	saveToField := t.FieldByName(contextFieldNameForRequest)
 	if !saveToField.IsValid() {
-		panic(fmt.Sprintf("Expected to find field named %q name on the context",contextFieldNameForRequest))
+		panic(fmt.Sprintf("Expected to find field named %q name on the context", contextFieldNameForRequest))
 	}
 
 	if !saveToField.CanSet() {
-		panic(fmt.Sprintf("Unable to set the value of field named %q on the context",contextFieldNameForRequest))
+		panic(fmt.Sprintf("Unable to set the value of field named %q on the context", contextFieldNameForRequest))
 	}
 
 	newObject := reflect.New(fieldType)
@@ -66,5 +67,5 @@ func ErrorHandler(rw web.ResponseWriter, err error) {
 		panic(fmt.Sprintf("Data already started to be sent to the client and i had an error: %s", err))
 	}
 	rw.WriteHeader(http.StatusBadRequest)
-	fmt.Fprintf(rw, "{\"Error\": \"%s\"", err)
+	fmt.Fprintf(rw, "{\"Error\": \"%s\"}", err)
 }
